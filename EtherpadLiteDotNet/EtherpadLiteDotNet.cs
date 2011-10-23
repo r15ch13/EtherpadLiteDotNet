@@ -9,7 +9,7 @@ namespace Etherpad
 {
     public enum EtherpadReturnCodeEnum
     {
-        OK,
+        Ok,
         InvalidParameters,
         InternalError,
         InvalidFunction,
@@ -19,15 +19,12 @@ namespace Etherpad
     public class EtherpadLiteDotNet
     {
         private const string APIVersion = "1";
-        private string APIKey { get; set; }
+        private string ApiKey { get; set; }
         private UriBuilder BaseURI { get; set; }
-
-        //By calling ParseQueryString with an empty string you get an empty HttpValueCollection which cannot be created any other way as it is a private class
-        private NameValueCollection QueryStringBase = System.Web.HttpUtility.ParseQueryString(String.Empty);
 
         public EtherpadLiteDotNet(string apiKey, string host, int port = 0)
         {
-            QueryStringBase.Add("apikey", apiKey);
+            ApiKey = apiKey;
             if (port == 0)
             {
                 BaseURI = new UriBuilder("http", host);
@@ -39,10 +36,13 @@ namespace Etherpad
 
         }
 
-        private EtherpadResponse CallAPI(string functionName, string query = "")
+        private EtherpadResponse CallAPI(string functionName, string[,] query = null, Type customReturnType = null )
         {
             BaseURI.Path = "api/" + APIVersion + "/" + functionName;
-            BaseURI.Query = query;
+            if (query != null)
+            {
+                BaseURI.Query = BuildQueryString(query);
+            }
 
             #region Get Response And Deserialize it
             EtherpadResponse responseObject;
@@ -51,7 +51,14 @@ namespace Etherpad
             {
                 JavaScriptSerializer js = new JavaScriptSerializer();
                 var responseText = reader.ReadToEnd();
-                responseObject = js.Deserialize<EtherpadResponse>(responseText);
+                if (customReturnType == null)
+                {
+                    responseObject = js.Deserialize<EtherpadResponse>(responseText);
+                }
+                else
+                {
+                    responseObject = (EtherpadResponse)js.Deserialize(responseText,customReturnType);
+                }
                 responseObject.JSON = responseText;
             }
             #endregion
@@ -75,7 +82,10 @@ namespace Etherpad
 
         private string BuildQueryString(string[,] query)
         {
-            var queryCollection = QueryStringBase;
+            //By calling ParseQueryString with an empty string you get an empty HttpValueCollection which cannot be created any other way as it is a private class
+            var queryCollection = System.Web.HttpUtility.ParseQueryString(String.Empty);
+            queryCollection.Add("apikey", ApiKey);
+
             int queryLength = query.Length - 1;
             for (int i = 0; i < queryLength; i++)
             {
@@ -86,39 +96,41 @@ namespace Etherpad
 
         #region Groups
 
-        public EtherpadResponse CreateGroup()
+        public EtherpadResponseGroupID CreateGroup()
         {
-            return CallAPI("createGroup");
+            return (EtherpadResponseGroupID)CallAPI("createGroup", null, typeof(EtherpadResponseGroupID));
         }
 
-        public EtherpadResponse CreateGroupIfNotExistsFor(string groupMapper)
+        public EtherpadResponseGroupID CreateGroupIfNotExistsFor(string groupMapper)
         {
-            return CallAPI("createGroupIfNotExistsFor",
-                BuildQueryString(new string[,] { { "groupMapper", groupMapper } }));
+            return (EtherpadResponseGroupID)CallAPI("createGroupIfNotExistsFor",
+                new string[,] { { "groupMapper", groupMapper } }, 
+                typeof(EtherpadResponseGroupID));
         }
 
         public EtherpadResponse DeleteGroup(string groupID)
         {
             return CallAPI("deleteGroup",
-                BuildQueryString(new string[,] { { "groupID", groupID } }));
+                new string[,] { { "groupID", groupID } });
         }
 
-        public EtherpadResponse ListPads(string groupID)
+        public EtherpadResponsePadIDs ListPads(string groupID)
         {
-            return CallAPI("listPads",
-                BuildQueryString(new string[,] { { "groupID", groupID } }));
+            return (EtherpadResponsePadIDs)CallAPI("listPads",
+                new string[,] { { "groupID", groupID } }, 
+                typeof(EtherpadResponsePadIDs));
         }
 
         public EtherpadResponse CreateGroupPad(string groupID, string padName)
         {
             return CallAPI("createGroupPad",
-                BuildQueryString(new string[,] { { "groupID", groupID }, { "padName ", padName } }));
+                new string[,] { { "groupID", groupID }, { "padName ", padName } });
         }
 
         public EtherpadResponse CreateGroupPad(string groupID, string padName, string text)
         {
             return CallAPI("createGroupPad",
-                BuildQueryString(new string[,] { { "groupID", groupID }, { "padName ", padName }, { "text", text } }));
+                new string[,] { { "groupID", groupID }, { "padName ", padName }, { "text", text } });
         }
 
         #endregion
@@ -127,143 +139,275 @@ namespace Etherpad
 
         public EtherpadResponse CreateAuthor()
         {
-            return CallAPI("createAuthor");
+            return CallAPI("createAuthor", null, typeof(EtherpadResponseAuthorID));
         }
 
-        public EtherpadResponse CreateAuthor(string name)
+        public EtherpadResponseAuthorID CreateAuthor(string name)
         {
-            return CallAPI("createAuthor",
-                BuildQueryString(new string[,] { { "name", name } }));
+            return (EtherpadResponseAuthorID)CallAPI("createAuthor",
+                new string[,] { { "name", name } },
+                typeof(EtherpadResponseAuthorID));
         }
 
-        public EtherpadResponse CreateAuthorIfNotExistsFor(string authorMapper)
+        public EtherpadResponseAuthorID CreateAuthorIfNotExistsFor(string authorMapper)
         {
-            return CallAPI("createAuthorIfNotExistsFor",
-                BuildQueryString(new string[,] { { "authorMapper", authorMapper } }));
+            return (EtherpadResponseAuthorID)CallAPI("createAuthorIfNotExistsFor",
+                new string[,] { { "authorMapper", authorMapper } },
+                typeof(EtherpadResponseAuthorID));
         }
 
-        public EtherpadResponse CreateAuthorIfNotExistsFor(string authorMapper, string name)
+        public EtherpadResponseAuthorID CreateAuthorIfNotExistsFor(string authorMapper, string name)
         {
-            return CallAPI("createAuthorIfNotExistsFor",
-                BuildQueryString(new string[,] { { "authorMapper", authorMapper }, { "name", name } }));
+            return (EtherpadResponseAuthorID)CallAPI("createAuthorIfNotExistsFor",
+                new string[,] { { "authorMapper", authorMapper }, { "name", name } },
+                typeof(EtherpadResponseAuthorID));
         }
 
         #endregion
 
         #region Session
 
-        public EtherpadResponse CreateSession(string groupID, string authorID, string validUntil)
+        public EtherpadResponseSessionID CreateSession(string groupID, string authorID, string validUntil)
         {
-            return CallAPI("createSession",
-                BuildQueryString(new string[,] { { "groupID", groupID }, { "authorID ", authorID }, { "validUntil", validUntil } }));
+            return (EtherpadResponseSessionID)CallAPI("createSession",
+                new string[,] { { "groupID", groupID }, { "authorID ", authorID }, { "validUntil", validUntil } },
+                typeof(EtherpadResponseSessionID));
         }
 
         public EtherpadResponse DeleteSession(string sessionID)
         {
             return CallAPI("deleteSession",
-                BuildQueryString(new string[,] { { "sessionID", sessionID } }));
+                new string[,] { { "sessionID", sessionID } });
         }
 
-        public EtherpadResponse ListSessionsOfGroup(string groupID) 
+        public EtherpadResponse GetSessionInfo(string sessionID)
         {
-            return CallAPI("listSessionsOfGroup",
-                BuildQueryString(new string[,] { { "groupID", groupID } }));
+            return CallAPI("getSessionInfo",
+                new string[,] { { "sessionID", sessionID } });
         }
 
-        public EtherpadResponse ListSessionsOfAuthor(string authorID)
+        public EtherpadResponseSessionInfos ListSessionsOfGroup(string groupID) 
         {
-            return CallAPI("listSessionsOfAuthor",
-                BuildQueryString(new string[,] { { "authorID", authorID } }));
+            return (EtherpadResponseSessionInfos)CallAPI("listSessionsOfGroup",
+                new string[,] { { "groupID", groupID } },
+                typeof(EtherpadResponseSessionInfos));
+        }
+
+        public EtherpadResponseSessionInfos ListSessionsOfAuthor(string authorID)
+        {
+            return (EtherpadResponseSessionInfos)CallAPI("listSessionsOfAuthor",
+                new string[,] { { "authorID", authorID } },
+                typeof(EtherpadResponseSessionInfos));
         }
 
         #endregion
 
         #region Pad
 
-        public EtherpadResponse GetText(string padID)
+        public EtherpadResponsePadText GetText(string padID)
         {
-            return CallAPI("getText",
-                BuildQueryString(new string[,] { { "padID", padID } }));
+            return (EtherpadResponsePadText)CallAPI("getText",
+                new string[,] { { "padID", padID } },
+                typeof(EtherpadResponsePadText));
         }
 
-        public EtherpadResponse GetText(string padID, int rev)
+        public EtherpadResponsePadText GetText(string padID, int rev)
         {
-            return CallAPI("getText",
-                BuildQueryString(new string[,] { { "padID", padID }, { "rev", rev.ToString() } }));
+            return (EtherpadResponsePadText)CallAPI("getText",
+                new string[,] { { "padID", padID }, { "rev", rev.ToString() } },
+                typeof(EtherpadResponsePadText));
         }
 
         public EtherpadResponse SetText(string padID, string text)
         {
             return CallAPI("setText",
-                BuildQueryString(new string[,] { { "padID", padID }, { "text", text } }));
+                new string[,] { { "padID", padID }, { "text", text } });
         }
 
         public EtherpadResponse CreatePad(string padID)
         {
             return CallAPI("createPad", 
-                BuildQueryString(new string[,] {{"padID", padID}} ));
+                new string[,] {{"padID", padID}} );
         }
 
         public EtherpadResponse CreatePad(string padID, string text)
         {
             return CallAPI("createPad", 
-                BuildQueryString(new string[,] { { "padID", padID } , { "text", text } }));
+                new string[,] { { "padID", padID } , { "text", text } });
         }
 
-        public EtherpadResponse GetRevisionsCount(string padID)
+        public EtherpadResponsePadRevisions GetRevisionsCount(string padID)
         {
-            return CallAPI("getRevisionsCount", 
-                BuildQueryString(new string[,] { { "padID", padID } }));
+            return (EtherpadResponsePadRevisions)CallAPI("getRevisionsCount", 
+                new string[,] { { "padID", padID } },
+                typeof(EtherpadResponsePadRevisions));
         }
 
         public EtherpadResponse DeletePad(string padID)
         {
             return CallAPI("deletePad", 
-                BuildQueryString(new string[,] { { "padID", padID } }));
+                new string[,] { { "padID", padID } });
         }
 
-        public EtherpadResponse GetReadOnlyID(string padID)
+        public EtherpadResponsePadReadOnlyID GetReadOnlyID(string padID)
         {
-            return CallAPI("getReadOnlyID",
-                   BuildQueryString(new string[,] { { "padID", padID } }));
+            return (EtherpadResponsePadReadOnlyID)CallAPI("getReadOnlyID",
+                   new string[,] { { "padID", padID } },
+                   typeof(EtherpadResponsePadReadOnlyID));
         }
 
         public EtherpadResponse SetPublicStatus(string padID, bool publicStatus)
         {
             return CallAPI("setPublicStatus",
-                    BuildQueryString(new string[,] { { "padID", padID }, { "publicStatus", publicStatus.ToString() } }));
+                    new string[,] { { "padID", padID }, { "publicStatus", publicStatus.ToString() } });
         }
 
-        public EtherpadResponse GetPublicStatus(string padID)
+        public EtherpadResponsePadPublicStatus GetPublicStatus(string padID)
         {
-            return CallAPI("getPublicStatus",
-                   BuildQueryString(new string[,] { { "padID", padID } }));
+            return (EtherpadResponsePadPublicStatus)CallAPI("getPublicStatus",
+                   new string[,] { { "padID", padID } },
+                   typeof(EtherpadResponsePadPublicStatus));
         }
 
         public EtherpadResponse SetPassword(string padID, string password)
         {
             return CallAPI("setPassword",
-                   BuildQueryString(new string[,] { { "padID", padID } , { "password", password } }));
+                   new string[,] { { "padID", padID } , { "password", password } });
         }
 
-        public EtherpadResponse IsPasswordProtected(string padID)
+        public EtherpadResponsePadPasswordProtection IsPasswordProtected(string padID)
         {
-            return CallAPI("isPasswordProtected",
-                   BuildQueryString(new string[,] { { "padID", padID } }));
+            return (EtherpadResponsePadPasswordProtection)CallAPI("isPasswordProtected",
+                   new string[,] { { "padID", padID } },
+                   typeof(EtherpadResponsePadPasswordProtection));
         }
 
         #endregion Pad
 
     }
 
-    //This class is returned by all the API calls
-    //The data is maped to a <string,string> dictionary, in the future I may implement full strong typing.
+    /// <summary>
+    ///This class is returned by all the API calls
+    ///If you wanted to reduce the number of classes needed
+    ///The strong typing could be replaced by: public Dictionary<string,string> Data { get; set; } in the base class
+    /// </summary>
     public class EtherpadResponse
     {
         public EtherpadReturnCodeEnum ReturnCode {get; set;}
-        public string Message { get; set; }
-        public Dictionary<string,string> Data { get; set; }
+        public string Message { get; set; }        
         public string JSON { get; set; }
     }
+
+    #region Classes to Strong Type Response
+
+    public class EtherpadResponseGroupID : EtherpadResponse
+    {
+        public DataGroupID Data {get; set;}
+    }
+
+    public class DataGroupID
+    {
+        public string GroupID { get; set; } 
+    }
+
+    public class EtherpadResponsePadIDs : EtherpadResponse
+    {
+        public DataPadIDs Data { get; set; }
+    }
+
+    public class DataPadIDs
+    {
+        public IEnumerable<string> PadIDs { get; set; }
+    }
+
+    public class EtherpadResponseAuthorID : EtherpadResponse
+    {
+        public DataAuthorID Data { get; set; }
+    }
+
+    public class DataAuthorID
+    {
+        public string AuthorID { get; set; }
+    }
+
+    public class EtherpadResponseSessionID : EtherpadResponse
+    {
+        public DataSessionID Data { get; set; }
+    }
+
+    public class DataSessionID
+    {
+        public string SessionID { get; set; }
+    }
+
+    public class EtherpadResponseSessionInfo : EtherpadResponse
+    {
+        public DataSessionInfo Data { get; set; }
+    }
+
+    public class EtherpadResponseSessionInfos : EtherpadResponse
+    {
+        public IEnumerable<DataSessionInfo> Data { get; set; }
+    }
+
+    public class DataSessionInfo
+    {
+        public string GrouopID { get; set; }
+        public string AuthorID { get; set; }
+        public int ValidUntil { get; set; }
+    }
+
+    public class EtherpadResponsePadText : EtherpadResponse
+    {
+        public DataPadText Data { get; set; }
+    }
+
+    public class DataPadText
+    {
+        public string Text { get; set; }
+    }
+
+    public class EtherpadResponsePadRevisions : EtherpadResponse
+    {
+        public DataPadRevisions Data { get; set; }
+    }
+
+    public class DataPadRevisions
+    {
+        public int Revisions { get; set; }
+    }
+
+    public class EtherpadResponsePadReadOnlyID : EtherpadResponse
+    {
+        public DataPadReadOnlyID Data { get; set; }
+    }
+
+    public class DataPadReadOnlyID
+    {
+        public string ReadOnlyID { get; set; }
+    }
+
+    public class EtherpadResponsePadPublicStatus : EtherpadResponse
+    {
+        public DataPadPublicStatus Data { get; set; }
+    }
+
+    public class DataPadPublicStatus
+    {
+        public bool PublicStatus { get; set; }
+    }
+
+    public class EtherpadResponsePadPasswordProtection : EtherpadResponse
+    {
+        public DataPadPasswordProtection Data { get; set; }
+    }
+
+    public class DataPadPasswordProtection
+    {
+        public bool PasswordProtection { get; set; }
+    }
+
+    #endregion
+
 }
 
