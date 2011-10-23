@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("EtherpadLiteDotNet")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("An implementation of the Etherpad Lite API for .Net")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("EtherpadLiteDotNet")]
-[assembly: AssemblyCopyright("")]
+[assembly: AssemblyCopyright("Licensed under the Apache License, Version 2.0: http://www.apache.org/licenses/LICENSE-2.0")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
