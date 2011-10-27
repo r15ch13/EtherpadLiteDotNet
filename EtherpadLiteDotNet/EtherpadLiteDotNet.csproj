@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{78D1DB63-0E1B-4027-92BF-5E81CAF5E250}</ProjectGuid>
+    <ProjectGuid>{3887A3BC-EFEB-40A7-997B-CFCDE32805FE}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>EtherpadLiteDotNet</RootNamespace>

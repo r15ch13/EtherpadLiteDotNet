@@ -101,8 +101,8 @@ namespace Etherpad
 
             if (query != null)
             {
-                int queryLength = query.Length - 1;
-                for (int i = 0; i < queryLength; i++)
+                int queryLength = query.GetLength(0) - 1;
+                for (int i = 0; i <= queryLength; i++)
                 {
                     queryCollection.Add(query[i, 0], query[i, 1]);
                 }
