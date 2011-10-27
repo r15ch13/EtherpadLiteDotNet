@@ -77,7 +77,7 @@ namespace Etherpad
             #endregion
 
             #region Check for Errors In Reponse
-            switch (responseObject.ReturnCode)
+            switch (responseObject.Code)
             {
                 case EtherpadReturnCodeEnum.InternalError:
                     throw new SystemException("An error has occured in Etherpad: " + responseObject.Message);
@@ -310,7 +310,7 @@ namespace Etherpad
     /// </summary>
     public class EtherpadResponse
     {
-        public EtherpadReturnCodeEnum ReturnCode {get; set;}
+        public EtherpadReturnCodeEnum Code { get; set; } 
         public string Message { get; set; }        
         public string JSON { get; set; }
     }
