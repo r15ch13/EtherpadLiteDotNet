@@ -141,13 +141,13 @@ namespace Etherpad
         public EtherpadResponse CreateGroupPad(string groupID, string padName)
         {
             return CallAPI("createGroupPad",
-                new string[,] { { "groupID", groupID }, { "padName ", padName } });
+                new string[,] { { "groupID", groupID }, { "padName", padName } });
         }
 
         public EtherpadResponse CreateGroupPad(string groupID, string padName, string text)
         {
             return CallAPI("createGroupPad",
-                new string[,] { { "groupID", groupID }, { "padName ", padName }, { "text", text } });
+                new string[,] { { "groupID", groupID }, { "padName", padName }, { "text", text } });
         }
 
         #endregion
