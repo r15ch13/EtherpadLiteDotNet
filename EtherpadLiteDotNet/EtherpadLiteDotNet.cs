@@ -187,7 +187,7 @@ namespace Etherpad
         public EtherpadResponseSessionID CreateSession(string groupID, string authorID, string validUntil)
         {
             return (EtherpadResponseSessionID)CallAPI("createSession",
-                new string[,] { { "groupID", groupID }, { "authorID ", authorID }, { "validUntil", validUntil } },
+                new string[,] { { "groupID", groupID }, { "authorID", authorID }, { "validUntil", validUntil } },
                 typeof(EtherpadResponseSessionID));
         }
 
